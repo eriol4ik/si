@@ -1,4 +1,4 @@
-package com.si.lab01;
+package com.si.lab03;
 
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
