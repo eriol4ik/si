@@ -5,6 +5,7 @@
         xmlns:int-stream=
         "http://www.springframework.org/schema/integration/stream"
         xmlns:int-file="http://www.springframework.org/schema/integration/file"
+        xmlns:int-xml="http://www.springframework.org/schema/integration/xml"
         xsi:schemaLocation="
         http://www.springframework.org/schema/beans
         http://www.springframework.org/schema/beans/spring-beans.xsd
@@ -13,19 +14,24 @@
         http://www.springframework.org/schema/integration/stream
         http://www.springframework.org/schema/integration/stream/spring-integration-stream.xsd
         http://www.springframework.org/schema/integration/file
-        http://www.springframework.org/schema/integration/file/spring-integration-file.xsd">
+        http://www.springframework.org/schema/integration/file/spring-integration-file.xsd
+        http://www.springframework.org/schema/integration/xml
+        http://www.springframework.org/schema/integration/xml/spring-integration-xml.xsd">
 
     <!--<int-stream:stdin-channel-adapter id="producer" channel="messageChannel" />-->
     <int-file:inbound-channel-adapter channel="inboundChannel" id="producer-file-adapter"
-                                      directory="file:c://inbound" prevent-duplicates="true">
+                                      directory="file:c://inboundXML" prevent-duplicates="true">
         <int:poller fixed-rate="5000" />
     </int-file:inbound-channel-adapter>
 
     <int:channel id="inboundChannel" />
 
+    <int:channel id="xml-inboundChannel" />
+
     <!-- a direct channel-->
     <int:channel id="outboundChannel" />
 
+    <!-- Adapter for writing files -->
     <int-file:outbound-channel-adapter channel="outboundChannel"
                                        id="consumer-file-adapter"
                                        directory="file:c://outbound" />
@@ -33,7 +39,18 @@
     <int:poller id="defaultPoller" default="true"
                 max-messages-per-poll="5" fixed-rate="200" />
 
-    <bean id="selector" class="com.si.lab03.FileSelector" />
+    <int-file:file-to-string-transformer id="file-2-string-transformer"
+                                         input-channel="inboundChannel"
+                                         output-channel="xml-inboundChannel"
+                                         charset="UTF-8" />
 
-    <int:filter input-channel="inboundChannel" output-channel="outboundChannel" ref="selector" />
+    <int-xml:xpath-expression id="filterXpathExp" expression="//country='USA'" />
+
+    <!--<int-xml:xpath-filter id="xpathFilter"
+                          input-channel="xml-inboundChannel"
+                          match-type="exact"
+                          output-channel="outboundChannel"
+                          xpath-expression-ref="filterXpathExp" />-->
+
+    <int-xml:validating-filter id="validation-filter" input-channel="xml-inboundChannel" output-channel="outboundChannel" schema-location="/META-INF/shiporder.xsd" />
 </beans>
